@@ -28,6 +28,8 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.#
 
+require 'rbconfig'
+
 module FFI
   CURRENT_PROCESS = USE_THIS_PROCESS_AS_LIBRARY = Object.new
 
@@ -126,7 +128,7 @@ module FFI
               else
                 # TODO better library lookup logic
                 unless libname.start_with?("/") || FFI::Platform.windows?
-                  path = ['/usr/lib/','/usr/local/lib/','/opt/local/lib/', '/opt/homebrew/lib/'].find do |pth|
+                  path = lib_paths.find do |pth|
                     File.exist?(pth + libname)
                   end
                   if path
@@ -468,6 +470,14 @@ module FFI
       # If called with a name, add a typedef alias
       typedef(e, name) if name
       e
+    end
+
+    def lib_paths
+      if RbConfig::CONFIG['host_vendor'] == 'apple' &&  RbConfig::CONFIG['host_cpu'] == 'arm64'
+        ['/usr/lib/','/opt/local/lib/', '/opt/homebrew/lib/', '/usr/local/lib/']
+      else
+        ['/usr/lib/','/usr/local/lib/','/opt/local/lib/', '/opt/homebrew/lib/']
+      end
     end
 
     public
